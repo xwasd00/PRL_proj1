@@ -1,22 +1,23 @@
 #!/bin/bash
 PROJ=oems
-SRC=*.c
+SRC=*.cpp
+NUMBERS=8
+PROCESSES=4
 
-if [ $# -lt 1 ];then 
-    numbers=16;
-else
-    numbers=$1;
+if ! [ $# -lt 1 ];then 
+    PROCESSES=$1;
 fi;
 
-#preklad cpp zdrojaku
+# preklad cpp zdrojaku
 mpic++ -o $PROJ $SRC
 
-#vyrobeni souboru s random cisly
-dd if=/dev/random bs=1 count=$numbers of=numbers 2>/dev/null
+# vyrobeni souboru s random cisly
+dd if=/dev/random bs=1 count=$NUMBERS of=numbers 2>/dev/null
+#hexdump numbers
 
-#spusteni
-mpirun -np $numbers ./$PROJ
+# spusteni
+mpirun -np $PROCESSES ./$PROJ
 
-#uklid
+# uklid
 rm -f $PROJ numbers
 

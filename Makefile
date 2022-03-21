@@ -1,12 +1,9 @@
 MPICC=mpic++
 PREFIX=--prefix /usr/local/share/OpenMPI
-SRC=*.c
+SRC=*.cpp
 PROJ=oems
 TEST-FILE=test.sh
 LOGIN=xsovam00
-NUMBERS=16
-
-
 
 .PHONY:test
 
