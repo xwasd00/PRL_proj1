@@ -1,29 +1,17 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <mpi.h>
-
-#define BYTE unsigned char 
-#define COMMON_TAG 0
-
-using namespace std;
-string FILENAME = "numbers";
-MPI_Status status;
-
+/********************** Odd-even merge sort ***************************/
+/************ for 8 numbers (stored in binary file 'numbers') *********/
+/**************************** PRL project *****************************/
+/********** Michal Sova (xsovam00@stud.fit.vutbr.cz) ******************/
+/**********************************************************************/
+#include "oems.h"
 
 void print_vec(const vector<BYTE>& v, string delimiter){
-        for(auto &w: v){
-                cout << (int) w << delimiter;
-        }
+    for(auto &w: v){
+            cout << (int) w << delimiter;
+    }
 }
 
-void debug_print(const int rank,const vector<BYTE>& vec){
-    cout << "rank " << rank << endl;
-    print_vec(vec, " ");
-    cout << endl << "rank " << rank << endl;
-}
-
-vector<BYTE> get_input(const int rank) {
+vector<BYTE> get_input(const int rank){
     // open the file:
     ifstream file(FILENAME, ifstream::binary);
     if (file) {
@@ -57,15 +45,20 @@ vector<BYTE> net_1x1(const BYTE in1,const BYTE in2){
 }
 
 vector<BYTE> net_2x2(const vector<BYTE> &in1,const vector<BYTE> &in2, const int &rank, const vector<int> &ranks){
+    
+    /*********************** net_1x1 ******************************/
     if (rank == ranks[0]){
         vector<BYTE> out1 = net_1x1(in1[0], in2[0]);
         MPI_Send(&out1[0], 2, MPI_UNSIGNED_CHAR, ranks[2], COMMON_TAG, MPI_COMM_WORLD);
     }
+
+    /*********************** net_1x1 ******************************/
     if (rank == ranks[1]){
         vector<BYTE> out2 = net_1x1(in1[1], in2[1]);
         MPI_Send(&out2[0], 2, MPI_UNSIGNED_CHAR, ranks[2], COMMON_TAG, MPI_COMM_WORLD);
     }
 
+    /************* **** net_1x1 + output **************************/
     if (rank == ranks[2]){
         vector<BYTE> out;
         out.resize(4);
@@ -151,8 +144,9 @@ int main(int argc, char** argv) {
     vector<int> ranks;
     vector<BYTE> in;
 
-    /*************************** INPUT + 1. LAYER *****************************/
+    /***************************** 1. LAYER ***********************************/
     if (0 <= rank && rank <= 4){
+        /*************************** INPUT ************************************/
         in = get_input(rank);
         if (rank == 0) {
             if (in.size() != 8) {
@@ -192,8 +186,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    /**************************** 2. LAYER *************************************/
-    /**************************** net_2x2 **************************************/
+    /**************************** 2. LAYER ************************************/
+    /**************************** net_2x2 *************************************/
     if (rank == 5 || rank == 6){
         vector<BYTE> in1(2);
         vector<BYTE> in2(2);
@@ -210,7 +204,7 @@ int main(int argc, char** argv) {
         MPI_Send(&out1[0], 4, MPI_UNSIGNED_CHAR, 14, COMMON_TAG, MPI_COMM_WORLD);
         
     }
-    /**************************** net_2x2 **************************************/
+    /**************************** net_2x2 *************************************/
     if (rank == 8 || rank == 9){
         vector<BYTE> in3(2);
         vector<BYTE> in4(2);
@@ -225,7 +219,7 @@ int main(int argc, char** argv) {
         MPI_Send(&out2[0], 4, MPI_UNSIGNED_CHAR, 13, COMMON_TAG, MPI_COMM_WORLD);
         MPI_Send(&out2[0], 4, MPI_UNSIGNED_CHAR, 14, COMMON_TAG, MPI_COMM_WORLD);
     }
-    /******************** 3. LAYER (LAST) + OUTPUT ****************************/
+    /************************ 3. LAYER (LAST) *********************************/
     /***************************** net_4x4 ************************************/
     if (11 <= rank && rank < 15){
         vector<BYTE> in1_4x4(4);
@@ -241,6 +235,7 @@ int main(int argc, char** argv) {
 
     if (rank == 0){
         vector<BYTE> out = net_4x4({}, {}, rank, {11, 12, 13, 14, 15, 16, 17, 18, 19, 0});
+        /*************************** OUTPUT ***********************************/
         print_vec(out, "\n");
     }
     
