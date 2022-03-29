@@ -13,6 +13,7 @@ dd if=/dev/random bs=1 count=$NUMBERS of=numbers 2>/dev/null
 
 # spusteni
 mpirun -oversubscribe -np $PROCESSES ./$PROJ
+#mpirun -np $PROCESSES ./$PROJ
 
 # uklid
 rm -f $PROJ numbers

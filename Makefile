@@ -12,9 +12,8 @@ PROCESSES=20
 
 .PHONY:test
 
-test: merlin
-	ssh merlin "PATH=$$PATH:/usr/local/share/OpenMPI/bin && cd $(TMPDIR) && bash -e $(TEST-FILE)"
-	ssh merlin "rm -rf $(TPDIR)"
+test: 
+	bash -e $(TEST-FILE)
 
 run: $(PROJ) numbers
 	mpirun -np $(PROCESSES) ./$(PROJ)
@@ -27,14 +26,15 @@ doc: clean $(LOGIN).pdf
 
 merlin: pack
 	ssh merlin "mkdir -p $(TMPDIR)"
-	scp -q $(LOGIN).zip merlin:$(TMPDIR)
-	ssh merlin "cd $(TMPDIR) && unzip -oqq $(LOGIN).zip"
+	scp $(LOGIN).zip merlin:$(TMPDIR)
+	ssh merlin "PATH=$$PATH:/usr/local/share/OpenMPI/bin && cd $(TMPDIR) && unzip -oqq $(LOGIN).zip && echo 'bash -e $(TEST-FILE)' && bash -e $(TEST-FILE)"
+	ssh merlin "rm -rf $(TMPDIR)"
 
 pack: $(LOGIN).pdf
-	zip -rq $(LOGIN).zip $(SRC) $(HDR) $(TEST-FILE) $(LOGIN).pdf
+	zip -r $(LOGIN).zip $(SRC) $(HDR) $(TEST-FILE) $(LOGIN).pdf
 
 $(LOGIN).pdf: $(LOGIN).tex
-	pdflatex $(LOGIN).tex 1>/dev/null
+	pdflatex $(LOGIN).tex
 
 numbers:
 	dd if=/dev/random bs=1 count=$(NUMBERS) of=numbers 2>/dev/null

@@ -1,8 +1,9 @@
 /**
- * @file oems.h
  * @brief      Odd-even merge sort - for 8 numbers (stored in binary file
  *             'numbers')
  * @author     Michal Sova (xsovam00@stud.fit.vutbr.cz)
+ * @date       2022
+ * @file oems.h
  */
 #include <iostream>
 #include <fstream>

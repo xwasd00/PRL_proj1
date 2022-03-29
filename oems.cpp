@@ -1,8 +1,9 @@
 /**
- * @file oems.cpp
  * @brief      Odd-even merge sort - for 8 numbers (stored in binary file
  *             'numbers')
  * @author     Michal Sova (xsovam00@stud.fit.vutbr.cz)
+ * @date       2022
+ * @file oems.cpp
  */
 #include "oems.h"
 
@@ -160,12 +161,12 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     vector<BYTE> in;
-
-
-    /*************************** FIRST LAYER **********************************/
+    vector<int> ranks1_2x2 = {4, 5, 6};
+    vector<int> ranks2_2x2 = {7, 8, 9};
+    vector<int> ranks_4x4 = {10, 11, 12, 13, 14, 15, 16, 17, 18, 0};
 
     // input handling + first layer - processors {0, 1, 2, 3, 4)
-    if (0 <= rank && rank <= 4){
+    if (0 <= rank && rank <= 3){
         in = get_input();
 
         // processor 0 checks size of vector and prints it
@@ -178,112 +179,104 @@ int main(int argc, char** argv) {
             print_vec(in, " ");
             cout << endl;
         }
+    }
 
-        // net 1x1 - processor 1
-        // 
-        // sends output to processors 5 and 6
-        if (rank == 1){
-            vector<BYTE> o1 = net_1x1(in[0], in[1]);
-            MPI_Send(&o1[0], 2, MPI_UNSIGNED_CHAR, 5, 0, MPI_COMM_WORLD);
-            MPI_Send(&o1[0], 2, MPI_UNSIGNED_CHAR, 6, 0, MPI_COMM_WORLD);
-            
-        }
 
-        // net 1x1 - processor 2
-        // 
-        // sends output to processors 5 and 6
-        if (rank == 2){
-            vector<BYTE> o2 = net_1x1(in[2], in[3]);
-            MPI_Send(&o2[0], 2, MPI_UNSIGNED_CHAR, 5, 0, MPI_COMM_WORLD);
-            MPI_Send(&o2[0], 2, MPI_UNSIGNED_CHAR, 6, 0, MPI_COMM_WORLD);
-            
-        }
+    /*************************** FIRST LAYER **********************************/
 
-        // net 1x1 - processor 3
-        // 
-        // sends output to processors 7 and 8
-        if (rank == 3){
-            vector<BYTE> o3 = net_1x1(in[4], in[5]);
-            MPI_Send(&o3[0], 2, MPI_UNSIGNED_CHAR, 8, 0, MPI_COMM_WORLD);
-            MPI_Send(&o3[0], 2, MPI_UNSIGNED_CHAR, 9, 0, MPI_COMM_WORLD);
-            
-        }
-
-        // net 1x1 - processor 4
-        // 
-        // sends output to processors 7 and 8
-        if (rank == 4){
-            vector<BYTE> o4 = net_1x1(in[6], in[7]);
-            MPI_Send(&o4[0], 2, MPI_UNSIGNED_CHAR, 8, 0, MPI_COMM_WORLD);
-            MPI_Send(&o4[0], 2, MPI_UNSIGNED_CHAR, 9, 0, MPI_COMM_WORLD);
-        }
+    // net 1x1 - processor 0
+    // sends output to processors 4 and 5
+    if (rank == 0){
+        vector<BYTE> o1 = net_1x1(in[0], in[1]);
+        MPI_Send(&o1[0], 2, MPI_UNSIGNED_CHAR, 4, COMMON_TAG, MPI_COMM_WORLD);
+        MPI_Send(&o1[0], 2, MPI_UNSIGNED_CHAR, 5, COMMON_TAG, MPI_COMM_WORLD);
+        
+    }
+    // net 1x1 - processor 1
+    // sends output to processors 4 and 5
+    if (rank == 1){
+        vector<BYTE> o2 = net_1x1(in[2], in[3]);
+        MPI_Send(&o2[0], 2, MPI_UNSIGNED_CHAR, 4, COMMON_TAG, MPI_COMM_WORLD);
+        MPI_Send(&o2[0], 2, MPI_UNSIGNED_CHAR, 5, COMMON_TAG, MPI_COMM_WORLD);
+        
+    }
+    // net 1x1 - processor 2
+    // sends output to processors 7 and 8
+    if (rank == 2){
+        vector<BYTE> o3 = net_1x1(in[4], in[5]);
+        MPI_Send(&o3[0], 2, MPI_UNSIGNED_CHAR, 7, 0, MPI_COMM_WORLD);
+        MPI_Send(&o3[0], 2, MPI_UNSIGNED_CHAR, 8, 0, MPI_COMM_WORLD);
+        
+    }
+    // net 1x1 - processor 3
+    // sends output to processors 7 and 8
+    if (rank == 3){
+        vector<BYTE> o4 = net_1x1(in[6], in[7]);
+        MPI_Send(&o4[0], 2, MPI_UNSIGNED_CHAR, 7, 0, MPI_COMM_WORLD);
+        MPI_Send(&o4[0], 2, MPI_UNSIGNED_CHAR, 8, 0, MPI_COMM_WORLD);
     }
 
 
     /*************************** SECOND LAYER *********************************/
     
-    // net 2x2 - processors 5, 6 (input) and 7 (output)
-    // 
-    // processors 5 and 6 recieves data from first layer (processors 1 and 2)
-    // 
-    // processor 7 sends ordered vector to processors 11, 12, 13, 14
-    if (rank == 5 || rank == 6){
+    // net 2x2 - processors 4, 5 (input) and 6 (output)
+    // processors 4 and 5 recieves data from first layer (processors 0 and 1)
+    // processor 7 sends ordered vector to processors 10, 11, 12, 13
+    if (rank == 4 || rank == 5){
         vector<BYTE> in1(2);
         vector<BYTE> in2(2);
-        MPI_Recv(&in1[0], 2, MPI_UNSIGNED_CHAR, 1, COMMON_TAG, MPI_COMM_WORLD, &status); 
-        MPI_Recv(&in2[0], 2, MPI_UNSIGNED_CHAR, 2, COMMON_TAG, MPI_COMM_WORLD, &status);
-        net_2x2(in1, in2, rank, {5, 6, 7});
+        MPI_Recv(&in1[0], 2, MPI_UNSIGNED_CHAR, 0, COMMON_TAG, MPI_COMM_WORLD, &status); 
+        MPI_Recv(&in2[0], 2, MPI_UNSIGNED_CHAR, 1, COMMON_TAG, MPI_COMM_WORLD, &status);
+        net_2x2(in1, in2, rank, ranks1_2x2);
     }
-    if (rank == 7){
-        vector<BYTE> out1 = net_2x2({}, {}, rank, {5, 6, 7});
+    if (rank == 6){
+        vector<BYTE> out1 = net_2x2({}, {}, rank, ranks1_2x2);
+        MPI_Send(&out1[0], 4, MPI_UNSIGNED_CHAR, 10, COMMON_TAG, MPI_COMM_WORLD);
         MPI_Send(&out1[0], 4, MPI_UNSIGNED_CHAR, 11, COMMON_TAG, MPI_COMM_WORLD);
         MPI_Send(&out1[0], 4, MPI_UNSIGNED_CHAR, 12, COMMON_TAG, MPI_COMM_WORLD);
         MPI_Send(&out1[0], 4, MPI_UNSIGNED_CHAR, 13, COMMON_TAG, MPI_COMM_WORLD);
-        MPI_Send(&out1[0], 4, MPI_UNSIGNED_CHAR, 14, COMMON_TAG, MPI_COMM_WORLD);
     }
 
-    // net 2x2 - processors 8, 9 (input) and 10 (output)
-    //
-    // processors 8 and 9 recieves data from first layer (processors 3 and 4)
-    //
-    // processor 10 sends ordered vector to processors 11, 12, 13, 14
-    if (rank == 8 || rank == 9){
+    // net 2x2 - processors 7, 8 (input) and 9 (output)
+    // processors 7 and 8 recieves data from first layer (processors 2 and 3)
+    // processor 9 sends ordered vector to processors 10, 11, 12, 13
+    if (rank == 7 || rank == 8){
         vector<BYTE> in3(2);
         vector<BYTE> in4(2);
-        MPI_Recv(&in3[0], 2, MPI_UNSIGNED_CHAR, 3, COMMON_TAG, MPI_COMM_WORLD, &status); 
-        MPI_Recv(&in4[0], 2, MPI_UNSIGNED_CHAR, 4, COMMON_TAG, MPI_COMM_WORLD, &status);
-        net_2x2(in3, in4, rank, {8, 9, 10});
+        MPI_Recv(&in3[0], 2, MPI_UNSIGNED_CHAR, 2, COMMON_TAG, MPI_COMM_WORLD, &status); 
+        MPI_Recv(&in4[0], 2, MPI_UNSIGNED_CHAR, 3, COMMON_TAG, MPI_COMM_WORLD, &status);
+        net_2x2(in3, in4, rank, ranks2_2x2);
     }
-    if (rank == 10){
-        vector<BYTE> out2 = net_2x2({}, {}, rank, {8, 9, 10});
+    if (rank == 9){
+        vector<BYTE> out2 = net_2x2({}, {}, rank, ranks2_2x2);
+        MPI_Send(&out2[0], 4, MPI_UNSIGNED_CHAR, 10, COMMON_TAG, MPI_COMM_WORLD);
         MPI_Send(&out2[0], 4, MPI_UNSIGNED_CHAR, 11, COMMON_TAG, MPI_COMM_WORLD);
         MPI_Send(&out2[0], 4, MPI_UNSIGNED_CHAR, 12, COMMON_TAG, MPI_COMM_WORLD);
         MPI_Send(&out2[0], 4, MPI_UNSIGNED_CHAR, 13, COMMON_TAG, MPI_COMM_WORLD);
-        MPI_Send(&out2[0], 4, MPI_UNSIGNED_CHAR, 14, COMMON_TAG, MPI_COMM_WORLD);
     }
 
 
     /********************** THIRD LAYER (LAST) ********************************/
 
-    // net 4x4 - processors {11, 12, 13, 14} for input, {15, 16, 17, 18, 19} for
+    // net 4x4 - processors {10, 11, 12, 13} for input, {14, 15, 16, 17, 18} for
     // processors needed by net_4x4 and processor 0 for output
     //
-    // processors {11, 12, 13, 14} recieves data from second layer (processors 7
-    // and 10)
+    // processors {10, 11, 12, 13} recieves data from second layer (processors 6
+    // and 9)
     // 
     // processor 0 gets ordered vector and prints vector
-    if (11 <= rank && rank < 15){
+    if (10 <= rank && rank < 14){
         vector<BYTE> in1_4x4(4);
         vector<BYTE> in2_4x4(4);
-        MPI_Recv(&in1_4x4[0], 4, MPI_UNSIGNED_CHAR, 7, COMMON_TAG, MPI_COMM_WORLD, &status);
-        MPI_Recv(&in2_4x4[0], 4, MPI_UNSIGNED_CHAR, 10, COMMON_TAG, MPI_COMM_WORLD, &status);
-        vector<BYTE> out_part = net_4x4(in1_4x4, in2_4x4, rank, {11, 12, 13, 14, 15, 16, 17, 18, 19, 0});
+        MPI_Recv(&in1_4x4[0], 4, MPI_UNSIGNED_CHAR, 6, COMMON_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(&in2_4x4[0], 4, MPI_UNSIGNED_CHAR, 9, COMMON_TAG, MPI_COMM_WORLD, &status);
+        vector<BYTE> out_part = net_4x4(in1_4x4, in2_4x4, rank, ranks_4x4);
     }
-    if (15 <= rank && rank < 20){
-        net_4x4({}, {}, rank, {11, 12, 13, 14, 15, 16, 17, 18, 19, 0});
+    if (14 <= rank && rank < 19){
+        net_4x4({}, {}, rank, ranks_4x4);
     }
     if (rank == 0){
-        vector<BYTE> out = net_4x4({}, {}, rank, {11, 12, 13, 14, 15, 16, 17, 18, 19, 0});
+        vector<BYTE> out = net_4x4({}, {}, rank, ranks_4x4);
         print_vec(out, "\n");
     }
     
