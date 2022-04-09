@@ -8,7 +8,7 @@ TEST-FILE=test.sh
 LOGIN=xsovam00
 TMPDIR=tmp-prl
 NUMBERS=8
-PROCESSES=20
+PROCESSES=19
 
 .PHONY:test
 
@@ -34,6 +34,7 @@ pack: $(LOGIN).pdf
 	zip -r $(LOGIN).zip $(SRC) $(HDR) $(TEST-FILE) $(LOGIN).pdf
 
 $(LOGIN).pdf: $(LOGIN).tex
+	pdflatex $(LOGIN).tex
 	pdflatex $(LOGIN).tex
 
 numbers:

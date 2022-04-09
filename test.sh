@@ -3,7 +3,7 @@ PROJ=oems
 SRC=$PROJ.cpp
 HDR=$PROJ.h
 NUMBERS=8
-PROCESSES=20
+PROCESSES=19
 
 # preklad cpp zdrojaku
 mpic++ -o $PROJ $SRC $HDR
